@@ -489,9 +489,19 @@ function saveAction(action, item){
 })();
 
 /* ── Boot ── */
-/* ── Boot ── */
 el("startBtn").addEventListener("click", function() {
-  // إخفاء الزر وإظهار اللودر عند النقر
+  // 1. فحص ما إذا كان المستخدم داخل متصفح فيسبوك أو ماسنجر أو إنستغرام
+  var ua = navigator.userAgent || navigator.vendor || window.opera;
+  var isSocialApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Messenger") > -1) || (ua.indexOf("Instagram") > -1);
+
+  if (isSocialApp) {
+    // إيقاف العملية وإظهار رسالة تعليمات لفتح المتصفح الخارجي
+    el("splash").classList.add("hide");
+    showError("متصفح ماسنجر لا يدعم ميزة تحديد الموقع 🚫<br><br>يرجى الضغط على <b>الثلاث نقاط (⠇)</b> في أعلى الشاشة، ثم اختيار:<br><br><b>🌐 فتح في المتصفح (Open in Browser)</b>");
+    return; // إيقاف تنفيذ باقي الكود
+  }
+
+  // 2. إذا كان متصفحاً عادياً (كروم، سفاري، الخ)، نكمل العملية الطبيعية
   el("startBtn").style.display = "none";
   el("loaderWrap").style.display = "flex";
   el("splashSub").textContent = t("splashSub") || "جاري تحديد موقعك...";
@@ -508,8 +518,7 @@ el("startBtn").addEventListener("click", function() {
     function(error){
       applyLang(); 
       initMap(); 
-      // رسالة مخصصة تظهر إذا كان المتصفح الداخلي يحظر طلب الموقع
-      showError("تعذر الوصول للموقع. إذا كنت داخل ماسنجر، يرجى الضغط على الثلاث نقاط بالأعلى واختيار (فتح في المتصفح Chrome / Safari).");
+      showError("تعذر الوصول للموقع. يرجى التأكد من تفعيل خدمة الموقع (GPS) وإعطاء الصلاحية للمتصفح.");
     },
     {timeout:12000, enableHighAccuracy:true}
   );

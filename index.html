@@ -150,6 +150,23 @@ html,body{height:100%;overflow:hidden;font-family: 'IBM Plex Sans Arabic', tahom
 .dm3{background:#1a9e4a;}
 .dm-rc{background:#9c27b0;}
 
+  .btn-start {
+  margin-top: 20px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--red-light), var(--red-dark));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(204, 0, 0, 0.4);
+  animation: fadeUp .5s .5s both;
+  transition: transform 0.2s;
+}
+.btn-start:active { transform: scale(0.95); }
+
 @keyframes logoPop{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 @keyframes dotBounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-12px);}}
@@ -166,8 +183,11 @@ html,body{height:100%;overflow:hidden;font-family: 'IBM Plex Sans Arabic', tahom
     onerror="this.style.display='none';document.querySelector('.splash-logo-fallback').style.display='flex'">
   <div class="splash-logo-fallback">R</div>
   <div class="splash-title" id="splashTitle">أقرب وكلاء زيوت رايماكس</div>
-  <div class="splash-sub" id="splashSub">جاري تحديد موقعك...</div>
-  <div class="loader-wrap">
+  <div class="splash-sub" id="splashSub">لمعرفة أقرب وكيل إليك</div>
+  
+  <button id="startBtn" class="btn-start">تحديد موقعي 📍</button>
+
+  <div class="loader-wrap" id="loaderWrap" style="display:none;">
     <div class="gps-ring"><div class="gps-icon">📍</div></div>
     <div class="loader-dots"><span></span><span></span><span></span><span></span></div>
     <div class="loader-text" id="loaderText">يرجى السماح بالوصول إلى الموقع</div>
@@ -469,15 +489,31 @@ function saveAction(action, item){
 })();
 
 /* ── Boot ── */
-navigator.geolocation.getCurrentPosition(
-  function(pos){
-    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
-    lang=isKurdistan(userLat,userLng)?"ku":"ar";
-    applyLang(); initMap(); loadData();
-  },
-  function(){applyLang(); initMap(); showError();},
-  {timeout:12000,enableHighAccuracy:true}
-);
+/* ── Boot ── */
+el("startBtn").addEventListener("click", function() {
+  // إخفاء الزر وإظهار اللودر عند النقر
+  el("startBtn").style.display = "none";
+  el("loaderWrap").style.display = "flex";
+  el("splashSub").textContent = t("splashSub") || "جاري تحديد موقعك...";
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      userLat = pos.coords.latitude; 
+      userLng = pos.coords.longitude;
+      lang = isKurdistan(userLat,userLng) ? "ku" : "ar";
+      applyLang(); 
+      initMap(); 
+      loadData();
+    },
+    function(error){
+      applyLang(); 
+      initMap(); 
+      // رسالة مخصصة تظهر إذا كان المتصفح الداخلي يحظر طلب الموقع
+      showError("تعذر الوصول للموقع. إذا كنت داخل ماسنجر، يرجى الضغط على الثلاث نقاط بالأعلى واختيار (فتح في المتصفح Chrome / Safari).");
+    },
+    {timeout:12000, enableHighAccuracy:true}
+  );
+});
 </script>
 </body>
 </html>

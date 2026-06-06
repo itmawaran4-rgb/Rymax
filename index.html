@@ -183,11 +183,9 @@ html,body{height:100%;overflow:hidden;font-family: 'IBM Plex Sans Arabic', tahom
     onerror="this.style.display='none';document.querySelector('.splash-logo-fallback').style.display='flex'">
   <div class="splash-logo-fallback">R</div>
   <div class="splash-title" id="splashTitle">أقرب وكلاء زيوت رايماكس</div>
-  <div class="splash-sub" id="splashSub">لمعرفة أقرب وكيل إليك</div>
+  <div class="splash-sub" id="splashSub">جاري تحديد موقعك...</div>
   
-  <button id="startBtn" class="btn-start">تحديد موقعي 📍</button>
-
-  <div class="loader-wrap" id="loaderWrap" style="display:none;">
+  <div class="loader-wrap" id="loaderWrap">
     <div class="gps-ring"><div class="gps-icon">📍</div></div>
     <div class="loader-dots"><span></span><span></span><span></span><span></span></div>
     <div class="loader-text" id="loaderText">يرجى السماح بالوصول إلى الموقع</div>
@@ -489,23 +487,29 @@ function saveAction(action, item){
 })();
 
 /* ── Boot ── */
-el("startBtn").addEventListener("click", function() {
-  // 1. فحص ما إذا كان المستخدم داخل متصفح فيسبوك أو ماسنجر أو إنستغرام
+/* ── Boot ── */
+(function initApp() {
   var ua = navigator.userAgent || navigator.vendor || window.opera;
   var isSocialApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Messenger") > -1) || (ua.indexOf("Instagram") > -1);
+  var isAndroid = /android/i.test(ua);
 
   if (isSocialApp) {
-    // إيقاف العملية وإظهار رسالة تعليمات لفتح المتصفح الخارجي
-    el("splash").classList.add("hide");
-    showError("متصفح ماسنجر لا يدعم ميزة تحديد الموقع 🚫<br><br>يرجى الضغط على <b>الثلاث نقاط (⠇)</b> في أعلى الشاشة، ثم اختيار:<br><br><b>🌐 فتح في المتصفح (Open in Browser)</b>");
-    return; // إيقاف تنفيذ باقي الكود
+    if (isAndroid) {
+      // إجبار أجهزة أندرويد على فتح متصفح كروم تلقائياً
+      el("splashSub").innerHTML = "جاري التحويل للمتصفح الخارجي...";
+      el("loaderWrap").style.display = "none";
+      var cleanUrl = window.location.href.replace(/^https?:\/\//, '');
+      window.location.href = "intent://" + cleanUrl + "#Intent;scheme=https;package=com.android.chrome;end;";
+      return; // إيقاف التنفيذ هنا
+    } else {
+      // أجهزة آيفون (iOS) تمنع التحويل التلقائي
+      el("splash").classList.add("hide");
+      showError("نظام iOS يمنع فتح المتصفح تلقائياً 🚫<br><br>يرجى الضغط على <b>أيقونة البوصلة أو الثلاث نقاط</b> في الأعلى/الأسفل، ثم اختيار:<br><br><b>🌐 فتح في المتصفح (Open in Safari)</b>");
+      return; // إيقاف التنفيذ هنا
+    }
   }
 
-  // 2. إذا كان متصفحاً عادياً (كروم، سفاري، الخ)، نكمل العملية الطبيعية
-  el("startBtn").style.display = "none";
-  el("loaderWrap").style.display = "flex";
-  el("splashSub").textContent = t("splashSub") || "جاري تحديد موقعك...";
-
+  // إذا كان المستخدم في متصفح خارجي فعلاً، نطلب الموقع مباشرة
   navigator.geolocation.getCurrentPosition(
     function(pos){
       userLat = pos.coords.latitude; 
@@ -522,7 +526,7 @@ el("startBtn").addEventListener("click", function() {
     },
     {timeout:12000, enableHighAccuracy:true}
   );
-});
+})();
 </script>
 </body>
 </html>
